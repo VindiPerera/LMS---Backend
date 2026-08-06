@@ -26,7 +26,11 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            // Signup no longer collects a display name — that's set
+            // afterwards on create_profile_screen.dart — so this is only
+            // honored if a caller happens to send one; AuthController
+            // falls back to an email-derived placeholder otherwise.
+            'name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)],
             // Matches FaceTalkRole in signup_screen.dart.
