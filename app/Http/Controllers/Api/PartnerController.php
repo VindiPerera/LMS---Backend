@@ -31,4 +31,16 @@ class PartnerController extends Controller
             ],
         ]);
     }
+
+    /**
+     * A single partner's profile, for connect_screen.dart tapping into
+     * partner_profile_screen.dart. Route-model-bound, so an unknown id
+     * results in a 404 automatically.
+     */
+    public function show(User $user): JsonResponse
+    {
+        return response()->json([
+            'user' => new UserResource($user),
+        ]);
+    }
 }
