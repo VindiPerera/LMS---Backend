@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -15,6 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
     'name',
     'email',
     'password',
+    'google_id',
     'role',
     'handle',
     'avatar_url',
@@ -52,5 +54,15 @@ class User extends Authenticatable
             'profile_completed' => 'boolean',
             'tags' => 'array',
         ];
+    }
+
+    /**
+     * Send the "Forgot password" email — overridden to mail a plain code
+     * (see ResetPasswordNotification) instead of the stock notification's
+     * link, since there's no web password-reset page in this API-only app.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

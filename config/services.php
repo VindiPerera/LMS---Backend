@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // "Continue with Google": web client ID from Google Cloud Console
+    // (APIs & Services > Credentials > OAuth client ID > Web application).
+    // The Flutter web app authenticates with Google Identity Services using
+    // this same client ID, then sends us the resulting ID token to verify.
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+    ],
+
 ];
