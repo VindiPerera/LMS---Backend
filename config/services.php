@@ -43,4 +43,21 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
     ],
 
+    // Direct card payments (PaymentController/PayPalService) — from
+    // developer.paypal.com -> Apps & Credentials, under the SAME PayPal
+    // Business account that has "Advanced Credit and Debit Card Payments"
+    // enabled. Sandbox and live have separate credentials; PAYPAL_MODE
+    // picks which base URL gets used.
+    'paypal' => [
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+    ],
+
+    // Used by FirestoreVipService to build the Firestore REST API URL —
+    // matches hello-frontend/lib/firebase_options.dart's projectId.
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID', 'hello-82bf9'),
+    ],
+
 ];

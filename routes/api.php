@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PartnerController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +19,19 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/media/upload', [MediaController::class, 'upload']);
 Route::get('/media/file/{path}', [MediaController::class, 'serveFile'])->where('path', '.*');
 Route::get('/media/{id}', [MediaController::class, 'show']);
+
+// Push notifications (replaces the Cloud Functions -> Firestore pipeline
+// this project doesn't deploy — see NotificationController's class doc).
+// Public like the media endpoints above: the app's real identity layer is
+// Firebase Auth, not Laravel Sanctum, so there's no bearer token here to
+// require — the uid is just a caller-supplied string, same trust model the
+// media endpoints already use.
+Route::post('/fcm-token', [NotificationController::class, 'saveToken']);
+Route::post('/notifications/push', [NotificationController::class, 'sendPush']);
+
+// Direct card payments (PayPal Advanced Card Payments) — see
+// PaymentController's class doc.
+Route::post('/payments/card-pay', [PaymentController::class, 'payWithCard']);
 
 
 // Authenticated endpoints (Sanctum bearer token required)
