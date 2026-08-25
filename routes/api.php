@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DeepLinkController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PartnerController;
@@ -32,6 +33,12 @@ Route::post('/notifications/push', [NotificationController::class, 'sendPush']);
 // Direct card payments (PayPal Advanced Card Payments) — see
 // PaymentController's class doc.
 Route::post('/payments/card-pay', [PaymentController::class, 'payWithCard']);
+
+// QR code / share-link deep links (see DeepLinkController's class doc and
+// deep_link_service.dart / friend_link_service.dart on the Flutter side).
+// Public for the same reason as fcm-token/notifications above.
+Route::post('/deep-links', [DeepLinkController::class, 'store']);
+Route::get('/deep-links/{code}', [DeepLinkController::class, 'show']);
 
 
 // Authenticated endpoints (Sanctum bearer token required)
