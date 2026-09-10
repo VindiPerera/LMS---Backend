@@ -24,3 +24,6 @@ Route::get('/u/{code}', [DeepLinkRedirectController::class, 'show'])->name('deep
 // files under public/.well-known/.
 Route::get('/.well-known/assetlinks.json', [WellKnownController::class, 'assetLinks']);
 Route::get('/.well-known/apple-app-site-association', [WellKnownController::class, 'appleAppSiteAssociation']);
+
+// Admin panel (Blade + session auth, its own `admin` guard) — see routes/admin.php.
+require __DIR__.'/admin.php';
