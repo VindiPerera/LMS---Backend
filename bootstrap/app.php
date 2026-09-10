@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);
+
+        // An unauthenticated hit on an /admin/* route should land back on
+        // the admin login screen, not the (nonexistent) mobile-app login.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin*')
+            ? route('admin.login')
+            : '/');
     })
 
     ->withExceptions(function (Exceptions $exceptions): void {

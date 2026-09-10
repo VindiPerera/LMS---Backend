@@ -62,6 +62,8 @@ class AuthController extends Controller
             ]);
         }
 
+        $this->assertNotBanned($user);
+
         $token = $user->createToken('facetalk-mobile')->plainTextToken;
 
         return response()->json([
@@ -117,6 +119,8 @@ class AuthController extends Controller
             $user->email_verified_at = now();
         }
         $user->save();
+
+        $this->assertNotBanned($user);
 
         $token = $user->createToken('facetalk-mobile')->plainTextToken;
 
@@ -232,6 +236,19 @@ class AuthController extends Controller
         return response()->json([
             'user' => new UserResource($request->user()),
         ]);
+    }
+
+    /**
+     * Reject login for an account an admin has banned (see the admin
+     * panel's user management screen / App\Models\User::isBanned()).
+     */
+    private function assertNotBanned(User $user): void
+    {
+        if ($user->isBanned()) {
+            throw ValidationException::withMessages([
+                'email' => ['This account has been suspended. Contact support for help.'],
+            ]);
+        }
     }
 
     /**

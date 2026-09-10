@@ -53,7 +53,17 @@ class User extends Authenticatable
             'is_vip' => 'boolean',
             'profile_completed' => 'boolean',
             'tags' => 'array',
+            'banned_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Whether an admin has banned this account (see the admin panel's user
+     * management screen). Checked at API login.
+     */
+    public function isBanned(): bool
+    {
+        return $this->banned_at !== null;
     }
 
     /**
