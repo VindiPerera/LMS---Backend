@@ -25,7 +25,7 @@ class FirestoreVipService
 
     public function __construct()
     {
-        $this->projectId = (string) config('services.firebase.project_id', 'hello-82bf9');
+        $this->projectId = (string) config('services.firebase.project_id', 'hello-52f9b');
         $this->credentialsPath = config('firebase.projects.app.credentials');
     }
 
