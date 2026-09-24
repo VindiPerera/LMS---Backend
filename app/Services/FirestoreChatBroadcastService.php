@@ -10,10 +10,10 @@ use RuntimeException;
 
 /**
  * Posts the admin panel's broadcast into every matched user's chat list as
- * a message from "FaceTalk" — same `chats/{chatId}` + `messages`
+ * a message from "FaceTalk Company" — same `chats/{chatId}` + `messages`
  * documents ChatService.sendMessage (hello-frontend) writes, so it renders
  * in the app's normal chat UI rather than a separate feature. The uid on
- * the "FaceTalk" side is fixed (self::SYSTEM_UID) and must match
+ * the "FaceTalk Company" side is fixed (self::SYSTEM_UID) and must match
  * ChatService.systemUid on the Flutter side exactly — that's what makes
  * chat_detail_screen.dart hide the reply composer for it, and what
  * firestore.rules' `isReadOnly` check (set on the chat doc here) blocks a
@@ -78,7 +78,7 @@ class FirestoreChatBroadcastService
                         'participants' => $this->encodeValue($participants),
                         'participantInfo' => $this->encodeValue([
                             self::SYSTEM_UID => [
-                                'name' => 'FaceTalk',
+                                'name' => 'FaceTalk Company',
                                 'avatarUrl' => '',
                                 'countryFlag' => '',
                                 'handle' => 'facetalk',
@@ -93,12 +93,12 @@ class FirestoreChatBroadcastService
                 ],
                 'updateMask' => ['fieldPaths' => [
                     'participants',
-                    'participantInfo.'.self::SYSTEM_UID,
+                    'participantInfo.'.$this->quotedFieldPathSegment(self::SYSTEM_UID),
                     'lastMessage',
                     'lastMessageAt',
                     'lastMessageSenderId',
-                    'unread.'.$uid,
-                    'unread.'.self::SYSTEM_UID,
+                    'unread.'.$this->quotedFieldPathSegment($uid),
+                    'unread.'.$this->quotedFieldPathSegment(self::SYSTEM_UID),
                     'isReadOnly',
                 ]],
             ];
@@ -124,6 +124,30 @@ class FirestoreChatBroadcastService
         if (!$response->successful()) {
             throw new RuntimeException('Firestore chat broadcast commit failed: '.$response->body());
         }
+    }
+
+    /**
+     * A single path segment (e.g. a uid) as it needs to appear inside a
+     * Firestore updateMask.fieldPaths string like "unread.{segment}".
+     * Firestore's own field-path grammar only allows an UNQUOTED segment
+     * to match `[a-zA-Z_][a-zA-Z0-9_]*` — a plain Firebase Auth uid very
+     * often starts with a digit (they're effectively random alphanumeric,
+     * e.g. "6xZ8uNt7QyXhwq4z0LGJpw9dXWB3"), which violates that and makes
+     * Firestore reject the whole :commit with "Invalid property path" —
+     * that segment then needs backtick-quoting instead, per Firestore's
+     * own escaping rule (backslash-escape any literal backtick/backslash
+     * inside the quotes). The `fields.unread`/`fields.participantInfo`
+     * VALUES built via encodeValue() below are unaffected by any of this —
+     * a Firestore map's own keys aren't restricted this way, only a
+     * field-path STRING segment is.
+     */
+    private function quotedFieldPathSegment(string $segment): string
+    {
+        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $segment) === 1) {
+            return $segment;
+        }
+
+        return '`'.str_replace(['\\', '`'], ['\\\\', '\\`'], $segment).'`';
     }
 
     /**

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminAuditLog;
+use App\Services\FirestoreChatBroadcastService;
+use App\Services\FirestoreReportService;
 use App\Services\FirestoreUserDirectory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +25,8 @@ class UserController extends Controller
     public function __construct(
         private readonly FirestoreUserDirectory $directory,
         private readonly FirebaseAuth $firebaseAuth,
+        private readonly FirestoreReportService $reports,
+        private readonly FirestoreChatBroadcastService $chatBroadcast,
     ) {
     }
 
@@ -56,7 +60,17 @@ class UserController extends Controller
             $authRecord = null;
         }
 
-        return view('admin.users.edit', ['uid' => $uid, 'profile' => $profile, 'authRecord' => $authRecord]);
+        return view('admin.users.edit', [
+            'uid' => $uid,
+            'profile' => $profile,
+            'authRecord' => $authRecord,
+            'reports' => $this->reports->forUser($uid),
+            'reportCount' => $this->reports->countForUser($uid),
+            'moderationHistory' => AdminAuditLog::where('target_type', 'firebase_user')
+                ->where('target_id', $uid)
+                ->latest()
+                ->get(),
+        ]);
     }
 
     public function update(Request $request, string $uid): RedirectResponse
@@ -146,6 +160,54 @@ class UserController extends Controller
         AdminAuditLog::recordFor($this->admin(), 'user.password_reset_sent', 'firebase_user', $uid);
 
         return back()->with('status', "Password reset email sent to {$email}.");
+    }
+
+    /**
+     * Posts a moderation warning into the user's chat list, the same
+     * read-only "FaceTalk Company" mechanism broadcasts already use (see
+     * FirestoreChatBroadcastService's doc) — a single-recipient send.
+     */
+    public function warn(Request $request, string $uid): RedirectResponse
+    {
+        $data = $request->validate(['message' => ['required', 'string', 'max:1000']]);
+
+        $this->chatBroadcast->sendToMany([$uid], $data['message']);
+
+        AdminAuditLog::recordFor($this->admin(), 'user.warned', 'firebase_user', $uid, ['message' => $data['message']]);
+
+        return back()->with('status', 'Warning sent.');
+    }
+
+    /**
+     * Permanently deletes the Firebase Auth account and the Firestore
+     * `users/{uid}` profile document. Scope note: this does NOT cascade to
+     * every moment/message/room-history document the uid ever touched —
+     * those remain, orphaned by uid, exactly as e.g. a deleted Moments post
+     * author already can happen today. A full content cascade is a
+     * materially bigger, separate feature; this matches what "delete the
+     * account" needs for moderation (the account can no longer be used,
+     * signed into, or found in the user directory).
+     */
+    public function destroy(Request $request, string $uid): RedirectResponse
+    {
+        $profile = $this->directory->find($uid);
+        abort_if($profile === null, 404, 'No Firestore profile for this user.');
+
+        $data = $request->validate(['confirm_name' => ['required', 'string']]);
+        if ($data['confirm_name'] !== ($profile['name'] ?? '')) {
+            return back()->withErrors(['confirm_name' => 'Name does not match — account was not deleted.']);
+        }
+
+        try {
+            $this->firebaseAuth->deleteUser($uid);
+        } catch (UserNotFound) {
+            // No Auth record (already deleted, or Firestore-only profile) — still remove the Firestore doc below.
+        }
+        $this->directory->delete($uid);
+
+        AdminAuditLog::recordFor($this->admin(), 'user.deleted', 'firebase_user', $uid, ['name' => $profile['name'] ?? null]);
+
+        return redirect()->route('admin.users.index')->with('status', 'Account permanently deleted.');
     }
 
     private function admin(): \App\Models\Admin

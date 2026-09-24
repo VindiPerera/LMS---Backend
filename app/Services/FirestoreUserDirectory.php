@@ -165,6 +165,22 @@ class FirestoreUserDirectory
     }
 
     /**
+     * Deletes `users/{uid}` outright — used only alongside deleting the
+     * matching Firebase Auth account (UserController::destroy), never on
+     * its own. Scope note: this is the core profile document only, not a
+     * cascade of every moment/message/room-history doc that uid ever
+     * touched — see UserController::destroy's own doc for why.
+     */
+    public function delete(string $uid): void
+    {
+        $response = Http::withToken($this->accessToken())->delete($this->documentUrl("/users/{$uid}"));
+
+        if (!$response->successful() && $response->status() !== 404) {
+            throw new RuntimeException('Failed to delete Firestore user: '.$response->body());
+        }
+    }
+
+    /**
      * Shared by search() and count(): translates the admin-facing filter
      * set into a Firestore `where` clause, plus which field it needs to be
      * ordered by (only matters for search()'s pagination cursor).
