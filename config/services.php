@@ -54,10 +54,14 @@ return [
         'client_secret' => env('PAYPAL_CLIENT_SECRET'),
     ],
 
-    // Used by FirestoreVipService to build the Firestore REST API URL —
-    // matches hello-frontend/lib/firebase_options.dart's projectId.
+    // Used by FirestoreVipService/FirestoreUserDirectory to build the
+    // Firestore REST API URL — matches hello-frontend/lib/
+    // firebase_options.dart's projectId. (Was 'hello-82bf9' — a different,
+    // unrelated Firebase project a service-account key had apparently been
+    // generated for at some point; fixed to the project the app actually
+    // uses.)
     'firebase' => [
-        'project_id' => env('FIREBASE_PROJECT_ID', 'hello-82bf9'),
+        'project_id' => env('FIREBASE_PROJECT_ID', 'hello-52f9b'),
     ],
 
 ];

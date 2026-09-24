@@ -2,6 +2,22 @@
 
 @section('title', $profile['name'] ?? $uid)
 
+@php
+    // Same label map as admin/reports/index.blade.php — kept in sync
+    // manually with lib/models/report_model.dart's ReportReason/UserReportReason.
+    $reasonLabels = [
+        'spam' => 'Spam',
+        'inappropriate' => 'Inappropriate content',
+        'harassment' => 'Harassment or bullying',
+        'languagesMismatch' => 'Languages used and set do not match',
+        'fraud' => 'Attempted/committed fraud',
+        'sexualContent' => 'Sent sexual content',
+        'abusiveLanguage' => 'Used abusive language',
+        'religiousPoliticalContent' => 'Sent religious/political content',
+        'other' => 'Other',
+    ];
+@endphp
+
 @section('content')
 <a href="{{ route('admin.users.index') }}" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 mb-4">
     <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75">
@@ -128,7 +144,79 @@
                     </form>
                 @endif
             </div>
+
+            <div class="pt-2 border-t border-slate-100 space-y-2">
+                <label class="field-label" for="warn_message">Send warning message</label>
+                <form method="POST" action="{{ route('admin.users.warn', $uid) }}"
+                      onsubmit="return confirm('Send this warning to the user\'s chat?')" class="space-y-2">
+                    @csrf
+                    <textarea id="warn_message" name="message" rows="2" required maxlength="1000"
+                              placeholder="e.g. Please follow the community guidelines — further reports may lead to account action."
+                              class="field-input"></textarea>
+                    <button type="submit" class="btn-secondary w-full justify-start">
+                        <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6.5v4.25M10 13.75h.008M2.5 10a7.5 7.5 0 1 1 15 0 7.5 7.5 0 0 1-15 0Z"/>
+                        </svg>
+                        Send warning to chat
+                    </button>
+                </form>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 space-y-2">
+                <form method="POST" action="{{ route('admin.users.destroy', $uid) }}"
+                      onsubmit="return confirm('This permanently deletes the account and cannot be undone. Continue?')"
+                      class="space-y-2">
+                    @csrf
+                    @method('DELETE')
+                    <label class="field-label" for="confirm_name">Delete account permanently</label>
+                    <p class="field-hint -mt-1">Type the user's name (<span class="font-medium">{{ $profile['name'] ?? '' }}</span>) to confirm. This cannot be undone.</p>
+                    <input id="confirm_name" name="confirm_name" type="text" required class="field-input">
+                    <button type="submit" class="btn-danger w-full">Delete account permanently</button>
+                </form>
+            </div>
         </div>
     @endif
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+    <div class="card-pad">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-semibold text-slate-900">Reports about this user</h2>
+            <span class="badge-neutral">{{ $reportCount }} total</span>
+        </div>
+        @forelse ($reports as $report)
+            <div class="py-2.5 {{ !$loop->last ? 'border-b border-slate-100' : '' }}">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-medium text-slate-900">{{ ucfirst($report['status']) }}</span>
+                    <span class="text-xs text-slate-400">{{ \Illuminate\Support\Carbon::parse($report['createdAt'] ?? null)->format('Y-m-d H:i') }}</span>
+                </div>
+                <p class="text-sm text-slate-600 mt-0.5">{{ $reasonLabels[$report['reason'] ?? ''] ?? ($report['reason'] ?? '—') }}</p>
+                @if (!empty($report['details']))
+                    <p class="text-xs text-slate-400 mt-0.5">{{ $report['details'] }}</p>
+                @endif
+                <p class="text-xs text-slate-400 mt-0.5">Reported by {{ $report['reporterId'] ?? '—' }}</p>
+            </div>
+        @empty
+            <p class="text-sm text-slate-400">No reports on file for this user.</p>
+        @endforelse
+        @if (count($reports) > 0)
+            <a href="{{ route('admin.reports.index') }}" class="text-xs text-indigo-600 hover:text-indigo-700 mt-3 inline-block">Manage statuses in Reports &rarr;</a>
+        @endif
+    </div>
+
+    <div class="card-pad">
+        <h2 class="text-sm font-semibold text-slate-900 mb-4">Moderation history</h2>
+        @forelse ($moderationHistory as $entry)
+            <div class="py-2.5 {{ !$loop->last ? 'border-b border-slate-100' : '' }}">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-medium text-slate-900">{{ str_replace('_', ' ', str_replace('user.', '', $entry->action)) }}</span>
+                    <span class="text-xs text-slate-400">{{ $entry->created_at->format('Y-m-d H:i') }}</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">by {{ $entry->admin?->name ?? 'Unknown admin' }}</p>
+            </div>
+        @empty
+            <p class="text-sm text-slate-400">No moderation actions recorded for this user.</p>
+        @endforelse
+    </div>
 </div>
 @endsection

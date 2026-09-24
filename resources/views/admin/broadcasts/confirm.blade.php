@@ -25,7 +25,9 @@
         <div>
             <div class="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">Audience</div>
             <div class="text-sm text-slate-700">
-                @if (empty($filters))
+                @if ($data['audience_type'] === 'specific_users')
+                    {{ implode(', ', $recipientNames ?? []) }}
+                @elseif (empty($filters))
                     Everyone with a saved push token
                 @else
                     {{ array_key_first($filters) }} = {{ reset($filters) }}
@@ -39,20 +41,26 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 6.5v4.25M10 13.75h.008M2.5 10a7.5 7.5 0 1 1 15 0 7.5 7.5 0 0 1-15 0Z"/>
         </svg>
         <span>
-            <strong>~{{ number_format($recipientEstimate) }}</strong> matching users will get this as a chat
-            message from FaceTalk (read-only — they can't reply). Whichever of them also have a saved push
-            token get a notification too. This is an estimate (matches Firestore's profile data, at the
-            moment you clicked preview) — sending can't be undone once it starts.
+            <strong>{{ $data['audience_type'] === 'specific_users' ? '' : '~' }}{{ number_format($recipientEstimate) }}</strong>
+            {{ $recipientEstimate === 1 ? 'user' : 'users' }} will get this as a chat
+            message from FaceTalk Company (read-only — they can't reply). Whichever of them also have a saved push
+            token get a notification too.
+            @if ($data['audience_type'] !== 'specific_users')
+                This is an estimate (matches Firestore's profile data, at the moment you clicked preview) —
+            @endif
+            sending can't be undone once it starts.
         </span>
     </div>
 
-    <form method="POST" action="{{ route('admin.broadcasts.store') }}"
-          onsubmit="return confirm('Send this to ~{{ number_format($recipientEstimate) }} devices now?')">
+    <form method="POST" action="{{ route('admin.broadcasts.store') }}" id="broadcast-confirm-form"
+          onsubmit="return confirmAndLockSubmit(this, '{{ number_format($recipientEstimate) }}')">
         @csrf
+        <input type="hidden" name="confirm_token" value="{{ $confirmToken }}">
         <input type="hidden" name="title" value="{{ $data['title'] }}">
         <input type="hidden" name="body" value="{{ $data['body'] }}">
         <input type="hidden" name="audience_type" value="{{ $data['audience_type'] }}">
         <input type="hidden" name="audience_value" value="{{ $data['audience_value'] ?? '' }}">
+        <input type="hidden" name="recipients_json" value="{{ $data['recipients_json'] ?? '' }}">
         <button type="submit" class="btn-danger">
             <svg class="size-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2 8.5 15 3v14L2 11.5v-3Zm0 0v3"/>
@@ -61,4 +69,19 @@
         </button>
     </form>
 </div>
+
+<script>
+// Guards against a double-click (or any other way of firing this submit
+// twice) sending the same broadcast twice — the server-side confirm_token
+// check is the real guarantee (a token is single-use), this just avoids
+// even trying a second time and gives immediate "it's working" feedback.
+function confirmAndLockSubmit(form, estimate) {
+    if (!confirm('Send this to ~' + estimate + ' devices now?')) return false;
+    var button = form.querySelector('button[type="submit"]');
+    if (button.disabled) return false;
+    button.disabled = true;
+    button.textContent = 'Sending…';
+    return true;
+}
+</script>
 @endsection

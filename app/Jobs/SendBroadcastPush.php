@@ -12,7 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\LazyCollection;
 use Kreait\Firebase\Contract\Messaging;
 use Kreait\Firebase\Messaging\CloudMessage;
 
@@ -26,10 +25,18 @@ use Kreait\Firebase\Messaging\CloudMessage;
  *      way; they still get the chat message).
  *
  * Audience = FirestoreUserDirectory's matching uids (no filters = every
- * user). Queued because this can mean tens of thousands of writes/sends —
- * the request that created the Broadcast row returns immediately, this
- * does the actual work afterward (see admin.php's queue worker
- * requirement).
+ * user), or, for Admin\BroadcastController's specific_users audience
+ * type, an exact hand-picked uid list (see uidChunks()).
+ *
+ * Still a real ShouldQueue job (this can mean tens of thousands of
+ * writes/sends, which belongs off the request thread) — but
+ * BroadcastController::store() currently runs it via dispatchSync()
+ * rather than dispatch(), because this project has no deployed
+ * queue-worker process yet, so a real queued dispatch would just sit in
+ * the `jobs` table forever. Once real hosting exists with a worker
+ * (`php artisan queue:work` under Supervisor, or `queue:work
+ * --stop-when-empty` on a schedule), switching store() back to
+ * dispatch() is the only change needed — nothing here has to.
  */
 class SendBroadcastPush implements ShouldQueue
 {
@@ -122,12 +129,45 @@ class SendBroadcastPush implements ShouldQueue
      * :commit batch (2 writes/uid, 500-write cap), not the push side, which
      * comfortably handles chunks this size too.
      *
+     * A "Specific users…" broadcast (Admin\BroadcastController's
+     * specific_users audience type) already has its exact recipient list —
+     * audience_filters['uids'] — so this chunks that directly instead of
+     * asking FirestoreUserDirectory to resolve who matches a filter; there
+     * is no filter to resolve for this audience type.
+     *
+     * Plain manual accumulate-and-flush over eachUid()'s generator here —
+     * not LazyCollection::make($generator)->chunk(...) (what this used to
+     * be): Laravel's LazyCollection explicitly rejects a raw Generator
+     * instance ("Generators should not be passed directly to
+     * LazyCollection. Instead, pass a generator function.") — a
+     * pre-existing bug that had simply never run before, since nothing
+     * ever executed this job until dispatchSync() started actually
+     * running it (see class doc comment). Same shape as
+     * FirestoreChatBroadcastService::sendToMany's own chunking.
+     *
      * @return \Generator<int, list<string>>
      */
     private function uidChunks(Broadcast $broadcast, FirestoreUserDirectory $directory): \Generator
     {
-        foreach (LazyCollection::make($directory->eachUid($broadcast->audience_filters))->chunk(250) as $chunk) {
-            yield $chunk->values()->all();
+        $uids = $broadcast->audience_filters['uids'] ?? null;
+        if ($uids !== null) {
+            foreach (array_chunk($uids, 250) as $chunk) {
+                yield $chunk;
+            }
+
+            return;
+        }
+
+        $chunk = [];
+        foreach ($directory->eachUid($broadcast->audience_filters) as $uid) {
+            $chunk[] = $uid;
+            if (count($chunk) >= 250) {
+                yield $chunk;
+                $chunk = [];
+            }
+        }
+        if ($chunk) {
+            yield $chunk;
         }
     }
 }
