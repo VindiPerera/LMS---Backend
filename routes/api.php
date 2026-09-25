@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PartnerController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\VoiceRoomTokenController;
 use Illuminate\Support\Facades\Route;
 
 // Public auth endpoints
@@ -40,6 +41,12 @@ Route::post('/payments/card-pay', [PaymentController::class, 'payWithCard']);
 Route::post('/deep-links', [DeepLinkController::class, 'store']);
 Route::get('/deep-links/{code}', [DeepLinkController::class, 'show']);
 
+
+// Live voice room audio token — unlike the public endpoints above, this one
+// requires a verified Firebase ID token (see VerifyFirebaseIdToken); the
+// caller's identity and room membership are never taken from the request.
+Route::post('/voice-rooms/{roomId}/rtc-token', [VoiceRoomTokenController::class, 'issue'])
+    ->middleware('firebase.auth');
 
 // Authenticated endpoints (Sanctum bearer token required)
 Route::middleware('auth:sanctum')->group(function () {

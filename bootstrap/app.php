@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
 
+        $middleware->alias([
+            'firebase.auth' => \App\Http\Middleware\VerifyFirebaseIdToken::class,
+        ]);
+
         // An unauthenticated hit on an /admin/* route should land back on
         // the admin login screen, not the (nonexistent) mobile-app login.
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin*')
