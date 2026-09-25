@@ -64,4 +64,14 @@ return [
         'project_id' => env('FIREBASE_PROJECT_ID', 'hello-52f9b'),
     ],
 
+    // Live voice rooms — see AgoraTokenService/VoiceRoomTokenController.
+    // app_id is public (returned to the app in the token response so it's
+    // never hardcoded client-side); app_certificate is the SECRET used to
+    // sign tokens and must never leave this server.
+    'agora' => [
+        'app_id' => env('AGORA_APP_ID'),
+        'app_certificate' => env('AGORA_APP_CERTIFICATE'),
+        'token_ttl' => (int) env('AGORA_TOKEN_TTL', 3600),
+    ],
+
 ];
