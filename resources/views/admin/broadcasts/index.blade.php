@@ -17,6 +17,7 @@
 </p>
 
 <div class="card overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="w-full text-sm">
         <thead class="bg-slate-50/80 border-b border-slate-100">
             <tr>
@@ -60,6 +61,7 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 
 <div class="mt-4">
