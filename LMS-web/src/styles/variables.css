@@ -1,0 +1,55 @@
+/* Brand tokens mirroring FaceTalk Flutter App & Ultra-Clean Minimalist Light SaaS Design */
+:root {
+  --color-primary: #7b68f4;
+  --color-primary-dark: #6c5ce7;
+  --color-primary-light: #eeebfd;
+  --color-primary-subtle: #f7f6fe;
+  --color-primary-border: rgba(123, 104, 244, 0.22);
+  --color-primary-glow: rgba(123, 104, 244, 0.16);
+
+  --color-bg: #f9f9fb;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f4f5f8;
+  --color-surface-elevated: #ffffff;
+  --color-divider: #e8e8ee;
+  --color-border: #e6e6ed;
+  --color-border-subtle: #f0f0f5;
+
+  --color-text: #111217;
+  --color-text-secondary: #5e606f;
+  --color-text-tertiary: #9193a2;
+  --color-text-inverse: #ffffff;
+
+  --color-green: #2ecc71;
+  --color-green-light: #eafaf1;
+  --color-orange: #ff7a45;
+  --color-orange-light: #fff2ec;
+  --color-gold: #e8a23c;
+  --color-gold-light: #fef8ee;
+  --color-blue: #4fa8ff;
+  --color-blue-light: #edf6ff;
+  --color-red: #ff4757;
+  --color-pink: #ff4d8d;
+
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 9999px;
+
+  --shadow-subtle: 0 2px 8px -2px rgba(17, 18, 23, 0.04), 0 1px 3px rgba(17, 18, 23, 0.02);
+  --shadow-card: 0 10px 28px -6px rgba(17, 18, 23, 0.06), 0 2px 6px -1px rgba(17, 18, 23, 0.03);
+  --shadow-card-hover: 0 20px 40px -10px rgba(108, 92, 231, 0.12), 0 6px 16px -4px rgba(17, 18, 23, 0.04);
+  --shadow-floating: 0 28px 60px -16px rgba(108, 92, 231, 0.16), 0 10px 24px -6px rgba(17, 18, 23, 0.06);
+
+  --container-width: 1180px;
+  --container-narrow: 840px;
+  --header-height: 76px;
+
+  --transition-fast: 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
