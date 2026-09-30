@@ -66,6 +66,7 @@
     @if ($recentBroadcasts->isEmpty())
         <div class="px-5 py-10 text-center text-sm text-slate-400">No broadcasts sent yet.</div>
     @else
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <tbody class="divide-y divide-slate-100">
                 @foreach ($recentBroadcasts as $broadcast)
@@ -80,6 +81,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     @endif
 </div>
 @endsection
