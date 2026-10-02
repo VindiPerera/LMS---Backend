@@ -3,11 +3,24 @@
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\DeepLinkRedirectController;
 use App\Http\Controllers\WellKnownController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Public website (React SPA in LMS-web/, built into public/web by
+// `npm run build`). Every page path returns the same index.html and React
+// Router picks the page client-side.
+$serveWebApp = function () {
+    $index = public_path('web/index.html');
+
+    abort_unless(is_file($index), 503, 'Website not built yet — run `npm run build` in LMS-web/.');
+
+    return response()->file($index, [
+        'Content-Type' => 'text/html; charset=UTF-8',
+        'Cache-Control' => 'no-cache',
+    ]);
+};
+
+Route::get('/', $serveWebApp);
 
 // Explicit storage and media delivery routes with CORS headers (for Flutter Web and Mobile)
 Route::get('/storage/{path}', [MediaController::class, 'serveFile'])->where('path', '.*');
@@ -27,3 +40,15 @@ Route::get('/.well-known/apple-app-site-association', [WellKnownController::clas
 
 // Admin panel (Blade + session auth, its own `admin` guard) — see routes/admin.php.
 require __DIR__.'/admin.php';
+
+// Any other GET path (/terms, /privacy, /refund, unknown pages) goes to the
+// website so React Router can render it — except api/ and admin/, which keep
+// their normal 404s.
+Route::fallback(function (Request $request) use ($serveWebApp) {
+    abort_if(
+        ! $request->isMethod('GET') || $request->is('api/*', 'admin', 'admin/*'),
+        404
+    );
+
+    return $serveWebApp();
+});
