@@ -35,6 +35,7 @@ export default function Footer() {
               <li><a href="/#features">1-on-1 Language Swap</a></li>
               <li><a href="/#features">Global Moments</a></li>
               <li><a href="/#audience">Fluency Streaks</a></li>
+              <li><a href="/#pricing">VIP Pricing</a></li>
             </ul>
           </div>
 

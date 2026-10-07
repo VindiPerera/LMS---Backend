@@ -4,6 +4,7 @@ import TrustBar from '../sections/TrustBar.jsx'
 import AudienceSection from '../sections/AudienceSection.jsx'
 import BentoFeatures from '../sections/BentoFeatures.jsx'
 import HowItWorksSection from '../sections/HowItWorksSection.jsx'
+import PricingSection from '../sections/PricingSection.jsx'
 import FaqSection from '../sections/FaqSection.jsx'
 import CtaSection from '../sections/CtaSection.jsx'
 
@@ -15,6 +16,7 @@ export default function Home() {
       <AudienceSection />
       <BentoFeatures />
       <HowItWorksSection />
+      <PricingSection />
       <FaqSection />
       <CtaSection />
     </div>

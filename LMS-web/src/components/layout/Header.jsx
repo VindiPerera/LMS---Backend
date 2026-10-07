@@ -35,6 +35,7 @@ export default function Header() {
           <a href="/#features" className="header__link">Features</a>
           <a href="/#audience" className="header__link">Who It's For</a>
           <a href="/#how-it-works" className="header__link">How It Works</a>
+          <a href="/#pricing" className="header__link">Pricing</a>
           <a href="/#faq" className="header__link">FAQ</a>
           <div className="header__dropdown">
             <span className="header__link header__dropdown-toggle">
@@ -73,6 +74,7 @@ export default function Header() {
             <a href="/#features" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">Features</a>
             <a href="/#audience" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">Who It's For</a>
             <a href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">How It Works</a>
+            <a href="/#pricing" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">Pricing</a>
             <a href="/#faq" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">FAQ</a>
             
             <div className="header__mobile-divider" />
