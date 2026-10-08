@@ -157,6 +157,8 @@ export default function Refund() {
               <div className="legal-box-highlight">
                 <p><strong>FaceTalk Billing Support</strong></p>
                 <p>Email: <code>billing@facetalk-app.com</code></p>
+                <p>Phone: <code>+94 77 555 9738</code></p>
+                <p>Address: 37/9, Mahakatuwana Rd, Homagama, Western Province, Sri Lanka</p>
                 <p>Please include: Your FaceTalk Account Username, Registered Email, and Order Receipt number.</p>
               </div>
             </section>

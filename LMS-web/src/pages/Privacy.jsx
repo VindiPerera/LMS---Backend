@@ -157,6 +157,8 @@ export default function Privacy() {
               <div className="legal-box-highlight">
                 <p><strong>FaceTalk Data Protection Officer (DPO)</strong></p>
                 <p>Email: <code>privacy@facetalk-app.com</code></p>
+                <p>Phone: <code>+94 77 555 9738</code></p>
+                <p>Address: 37/9, Mahakatuwana Rd, Homagama, Western Province, Sri Lanka</p>
                 <p>Response Time: Typically within 48 business hours</p>
               </div>
             </section>

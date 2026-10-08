@@ -37,6 +37,7 @@ export default function Header() {
           <a href="/#how-it-works" className="header__link">How It Works</a>
           <a href="/#pricing" className="header__link">Pricing</a>
           <a href="/#faq" className="header__link">FAQ</a>
+          <Link to="/contact" className="header__link">Contact</Link>
           <div className="header__dropdown">
             <span className="header__link header__dropdown-toggle">
               Legal & Policies
@@ -76,7 +77,8 @@ export default function Header() {
             <a href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">How It Works</a>
             <a href="/#pricing" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">Pricing</a>
             <a href="/#faq" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">FAQ</a>
-            
+            <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">Contact</Link>
+
             <div className="header__mobile-divider" />
             <div className="header__mobile-section-label">Legal Policies</div>
             <Link to="/terms" onClick={() => setMobileMenuOpen(false)} className="header__mobile-link">Terms & Conditions</Link>

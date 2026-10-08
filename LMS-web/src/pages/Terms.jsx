@@ -162,6 +162,8 @@ export default function Terms() {
               <div className="legal-box-highlight">
                 <p><strong>FaceTalk Legal & Support Department</strong></p>
                 <p>Email: <code>support@facetalk-app.com</code> / <code>legal@facetalk-app.com</code></p>
+                <p>Phone: <code>+94 77 555 9738</code></p>
+                <p>Address: 37/9, Mahakatuwana Rd, Homagama, Western Province, Sri Lanka</p>
                 <p>Platform: FaceTalk LMS Mobile Application</p>
               </div>
             </section>

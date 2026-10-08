@@ -200,7 +200,7 @@
 
 .footer__top {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   gap: 48px;
 }
 
@@ -284,6 +284,34 @@
 
 .footer__legal-link {
   font-weight: 500;
+}
+
+.footer__contact-list {
+  gap: 14px;
+}
+
+.footer__contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.footer__contact-item svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.footer__contact-item a {
+  color: var(--color-text-secondary);
+  word-break: break-word;
+}
+
+.footer__contact-item a:hover {
+  color: var(--color-primary);
 }
 
 .footer__badge-status {

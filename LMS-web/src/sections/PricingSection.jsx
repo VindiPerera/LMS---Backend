@@ -84,9 +84,9 @@ export default function PricingSection() {
               <div className="pricing-table__plan-col pricing-table__plan-col--vip">
                 <a href="/#download" className="btn btn-primary btn-lg pricing-subscribe-btn">
                   <IconSparkles size={16} />
-                  <span>Subscribe — $3.02 / 30 days</span>
+                  <span>Subscribe — Rs. 1,000.00 / 30 days</span>
                 </a>
-                <span className="pricing-table__fx-note">≈ Rs. 1,000 at today's exchange rate</span>
+                <span className="pricing-table__fx-note">LKR &middot; billed every 30 days</span>
               </div>
             </div>
           </div>

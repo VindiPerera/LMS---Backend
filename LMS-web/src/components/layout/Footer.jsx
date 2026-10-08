@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import logo from '../../assets/images/facetalk_logo.png'
 import appIcon from '../../assets/images/facetalk_app_icon.png'
-import { IconShield, IconGlobe } from '../common/Icons.jsx'
+import { IconShield, IconGlobe, IconPhone, IconMail, IconMapPin } from '../common/Icons.jsx'
 import './Layout.css'
 
 export default function Footer() {
@@ -71,9 +71,33 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/contact" className="footer__legal-link">
+                  Contact Us
+                </Link>
+              </li>
+              <li>
                 <span className="footer__badge-status">
                   <IconShield size={14} /> Safe Community
                 </span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact Info - Business details for billing/payment partners */}
+          <div className="footer__col">
+            <h4 className="footer__heading">Contact Us</h4>
+            <ul className="footer__list footer__contact-list">
+              <li className="footer__contact-item">
+                <IconPhone size={14} />
+                <a href="tel:+94775559738">+94 77 555 9738</a>
+              </li>
+              <li className="footer__contact-item">
+                <IconMail size={14} />
+                <a href="mailto:facetalk87@gmail.com">facetalk87@gmail.com</a>
+              </li>
+              <li className="footer__contact-item">
+                <IconMapPin size={14} />
+                <span>37/9, Mahakatuwana Rd, Homagama, Western Province, Sri Lanka</span>
               </li>
             </ul>
           </div>
