@@ -94,6 +94,8 @@ class MediaController extends Controller
             'avatar' => "avatars/{$userId}",
             'video' => "moments/{$userId}/videos",
             'thumbnail' => "moments/{$userId}/thumbnails",
+            'voice' => "chats/{$userId}/voice",
+            'file' => "chats/{$userId}/files",
             default => "moments/{$userId}/images",
         };
 
