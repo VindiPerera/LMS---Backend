@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PartnerController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\VoiceRoomController;
 use Illuminate\Support\Facades\Route;
 
 // Public auth endpoints
@@ -33,6 +34,10 @@ Route::post('/notifications/push', [NotificationController::class, 'sendPush']);
 // Direct card payments (PayPal Advanced Card Payments) — see
 // PaymentController's class doc.
 Route::post('/payments/card-pay', [PaymentController::class, 'payWithCard']);
+
+// Live voice-room audio (LiveKit) — authenticates the caller with their
+// Firebase ID token itself; see VoiceRoomController's class doc.
+Route::post('/voice-rooms/{roomId}/token', [VoiceRoomController::class, 'token']);
 
 // QR code / share-link deep links (see DeepLinkController's class doc and
 // deep_link_service.dart / friend_link_service.dart on the Flutter side).
