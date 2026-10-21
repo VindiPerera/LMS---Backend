@@ -31,6 +31,17 @@ class FirestoreChatBroadcastService
      */
     public const SYSTEM_UID = 'facetalk_system';
 
+    /**
+     * The "FaceTalk Company" chat row's profile picture. A fixed production
+     * URL (not env/config-driven) deliberately — same reasoning as
+     * ApiConfig._prodBaseUrl on the Flutter side: this is always served from
+     * the live domain's public/web build regardless of which environment
+     * wrote this broadcast, and hello-frontend's AppAvatar only renders an
+     * `http(s)://` imageUrl in the first place, so a relative path here
+     * wouldn't render at all.
+     */
+    private const SYSTEM_AVATAR_URL = 'https://www.facetalkenglish.com/web/facetalk_app_icon.png';
+
     private const CHUNK_SIZE = 250;
 
     private string $projectId;
@@ -79,7 +90,7 @@ class FirestoreChatBroadcastService
                         'participantInfo' => $this->encodeValue([
                             self::SYSTEM_UID => [
                                 'name' => 'FaceTalk Company',
-                                'avatarUrl' => '',
+                                'avatarUrl' => self::SYSTEM_AVATAR_URL,
                                 'countryFlag' => '',
                                 'handle' => 'facetalk',
                             ],
