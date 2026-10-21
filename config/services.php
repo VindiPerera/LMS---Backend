@@ -54,6 +54,14 @@ return [
         'client_secret' => env('PAYPAL_CLIENT_SECRET'),
     ],
 
+    // Live voice-room audio — from cloud.livekit.io -> your project ->
+    // Settings -> Keys. `url` is the wss:// project URL (LiveKitTokenService).
+    'livekit' => [
+        'url' => env('LIVEKIT_URL'),
+        'api_key' => env('LIVEKIT_API_KEY'),
+        'api_secret' => env('LIVEKIT_API_SECRET'),
+    ],
+
     // Used by FirestoreVipService/FirestoreUserDirectory to build the
     // Firestore REST API URL — matches hello-frontend/lib/
     // firebase_options.dart's projectId. (Was 'hello-82bf9' — a different,
