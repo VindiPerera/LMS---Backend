@@ -12,6 +12,7 @@ use Kreait\Firebase\Contract\Messaging;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Exception\MessagingException;
 use Kreait\Firebase\Exception\FirebaseException;
+use App\Services\FirestoreNotificationService;
 
 /**
  * Server-side push notification sending, replacing the Cloud Functions ->
@@ -30,8 +31,18 @@ use Kreait\Firebase\Exception\FirebaseException;
  */
 class NotificationController extends Controller
 {
-    public function __construct(private readonly Messaging $messaging)
-    {
+    /** Notification types that belong in the in-app bell-icon feed
+     * (`notifications/{uid}/items`) — everything else (currently just
+     * `chat`) is push-only, on purpose: chat already has its own unread
+     * badge in the chat list, so duplicating it into this feed too would
+     * just be noise. Must stay in sync with NotificationType in
+     * lib/models/notification_model.dart. */
+    private const IN_APP_FEED_TYPES = ['like', 'comment', 'reshare', 'mention', 'voiceroom'];
+
+    public function __construct(
+        private readonly Messaging $messaging,
+        private readonly FirestoreNotificationService $notifications,
+    ) {
     }
 
     /**
@@ -92,12 +103,26 @@ class NotificationController extends Controller
         $body = $request->input('body');
         $data = $request->input('data', []);
 
+        // In-app bell-icon feed entry — written regardless of whether the
+        // recipient has a push token registered below (that's a separate,
+        // best-effort delivery channel; the in-app feed should still show
+        // this even if the recipient has never granted push permission or
+        // is on a device without one yet).
+        $type = $data['type'] ?? null;
+        if (in_array($type, self::IN_APP_FEED_TYPES, true) && !empty($data['actorId'])) {
+            $this->notifications->createItem($recipientUid, [
+                'type' => $type,
+                'actorId' => $data['actorId'],
+                'actorName' => $title,
+                'actorAvatar' => $data['actorAvatar'] ?? '',
+                'postId' => $data['postId'] ?? $data['roomId'] ?? '',
+            ]);
+        }
+
         $tokenRow = FcmToken::where('uid', $recipientUid)->first();
         if (!$tokenRow) {
             return response()->json(['success' => true, 'delivered' => false, 'reason' => 'no_token']);
         }
-
-        $type = $data['type'] ?? null;
 
         try {
             $message = CloudMessage::fromArray([
