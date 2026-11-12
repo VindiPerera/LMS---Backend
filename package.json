@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "build:web": "npm --prefix LMS-web run build",
-    "dev": "vite"
+    "build": "node init && vite build",
+    "build:web": "node init && npm --prefix LMS-web run build",
+    "dev": "node init && vite"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

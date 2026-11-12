@@ -32,7 +32,8 @@ class FirestoreVipService
     private function getAccessToken(): string
     {
         return Cache::remember('firestore_access_token', now()->addMinutes(50), function () {
-            if (!$this->credentialsPath || !file_exists(base_path($this->credentialsPath))) {
+            $path = $this->resolvedCredentialsPath();
+            if (!$path || !file_exists($path)) {
                 throw new RuntimeException(
                     'Firebase credentials not found — see FIREBASE_CREDENTIALS in .env ' .
                     '(same file NotificationController uses for FCM).'
@@ -41,11 +42,29 @@ class FirestoreVipService
 
             $credentials = new ServiceAccountCredentials(
                 'https://www.googleapis.com/auth/datastore',
-                base_path($this->credentialsPath),
+                $path,
             );
             $token = $credentials->fetchAuthToken();
             return $token['access_token'];
         });
+    }
+
+    /**
+     * FIREBASE_CREDENTIALS is meant to be an absolute path to a file kept
+     * outside the web root (see .env's comment on it) — base_path() doesn't
+     * know that and will happily concatenate the project root onto an
+     * already-absolute path, so only relative paths get it applied.
+     */
+    private function resolvedCredentialsPath(): ?string
+    {
+        if (!$this->credentialsPath) {
+            return null;
+        }
+
+        $isAbsolute = str_starts_with($this->credentialsPath, '/')
+            || preg_match('#^[A-Za-z]:[\\\\/]#', $this->credentialsPath) === 1;
+
+        return $isAbsolute ? $this->credentialsPath : base_path($this->credentialsPath);
     }
 
     /**

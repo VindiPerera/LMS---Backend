@@ -13,6 +13,7 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Exception\MessagingException;
 use Kreait\Firebase\Exception\FirebaseException;
 use App\Services\FirestoreNotificationService;
+use App\Services\FirestoreUserDirectory;
 
 /**
  * Server-side push notification sending, replacing the Cloud Functions ->
@@ -42,6 +43,7 @@ class NotificationController extends Controller
     public function __construct(
         private readonly Messaging $messaging,
         private readonly FirestoreNotificationService $notifications,
+        private readonly FirestoreUserDirectory $users,
     ) {
     }
 
@@ -159,6 +161,45 @@ class NotificationController extends Controller
             Log::warning("Push to {$recipientUid} failed: {$e->getMessage()}");
             return response()->json(['success' => true, 'delivered' => false, 'reason' => 'send_failed']);
         }
+    }
+
+    /**
+     * Repairs actorAvatar/actorName on every already-existing notification
+     * item [uid] is the actor of (across every recipient's own feed) to
+     * match their CURRENT `users/{uid}` profile — see
+     * FirestoreNotificationService::backfillActorAvatar's doc for why only
+     * this service-account-backed endpoint can do that at all. Looks the
+     * current name/avatar up itself from Firestore rather than trusting
+     * whatever the caller supplies, so this can't be used to graffiti
+     * someone else's past notifications with an arbitrary name/image.
+     *
+     * Called fire-and-forget from AuthService.init() on the Flutter side —
+     * same self-heal spot as the moments/voice-room fan-out — so a no-op
+     * run (the common case) costs one Firestore query and nothing else.
+     */
+    public function backfillActorAvatar(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'uid' => ['required', 'string', 'max:191'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $uid = $request->input('uid');
+        $user = $this->users->find($uid);
+        if ($user === null) {
+            return response()->json(['success' => true, 'repaired' => false, 'reason' => 'user_not_found']);
+        }
+
+        $this->notifications->backfillActorAvatar(
+            $uid,
+            (string) ($user['avatarUrl'] ?? ''),
+            (string) ($user['name'] ?? ''),
+        );
+
+        return response()->json(['success' => true, 'repaired' => true]);
     }
 
     /**

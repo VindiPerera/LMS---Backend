@@ -30,6 +30,7 @@ Route::get('/media/{id}', [MediaController::class, 'show']);
 // media endpoints already use.
 Route::post('/fcm-token', [NotificationController::class, 'saveToken']);
 Route::post('/notifications/push', [NotificationController::class, 'sendPush']);
+Route::post('/notifications/backfill-actor-avatar', [NotificationController::class, 'backfillActorAvatar']);
 
 // Direct card payments (PayPal Advanced Card Payments) — see
 // PaymentController's class doc.
