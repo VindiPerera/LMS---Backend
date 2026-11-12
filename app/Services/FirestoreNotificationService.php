@@ -66,10 +66,96 @@ class FirestoreNotificationService
         }
     }
 
+    /**
+     * Repairs `actorAvatar` (and `actorName`) on every already-existing
+     * notification item [actorUid] is the actor of, across every
+     * recipient's own `notifications/{uid}/items` subcollection.
+     *
+     * Unlike moments/voice rooms — which a user can fan their own profile
+     * changes out to because they own those documents — a notification item
+     * lives under its RECIPIENT's uid, and firestore.rules only lets the
+     * owner (the recipient) write there (see that file's comment on this
+     * collection). [actorUid] can never be the recipient of their own
+     * "X liked your moment" notification, so the client has no write path
+     * at all for these — only this service account (bypasses rules) does.
+     *
+     * Without this, a notification created while the actor's avatarUrl was
+     * still unset/stale (e.g. before they ever uploaded a profile photo)
+     * stays that way forever — there's nothing else that ever revisits it.
+     * Called fire-and-forget, best-effort, from NotificationController, the
+     * same self-heal spot as MomentService.updateAuthorInfoAcrossMoments on
+     * the Flutter side.
+     */
+    public function backfillActorAvatar(string $actorUid, string $avatarUrl, string $actorName): void
+    {
+        if ($actorUid === '') {
+            return;
+        }
+
+        try {
+            $token = $this->accessToken();
+            $queryUrl = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents:runQuery";
+
+            $response = Http::withToken($token)->post($queryUrl, [
+                'structuredQuery' => [
+                    'from' => [['collectionId' => 'items', 'allDescendants' => true]],
+                    'where' => [
+                        'fieldFilter' => [
+                            'field' => ['fieldPath' => 'actorId'],
+                            'op' => 'EQUAL',
+                            'value' => ['stringValue' => $actorUid],
+                        ],
+                    ],
+                    // Generous but bounded — this app's scale doesn't need
+                    // real pagination here, just a ceiling against a runaway
+                    // query if it ever did.
+                    'limit' => 1000,
+                ],
+            ]);
+
+            if (!$response->successful()) {
+                Log::warning("FirestoreNotificationService::backfillActorAvatar({$actorUid}) query failed: {$response->body()}");
+                return;
+            }
+
+            foreach ($response->json() ?? [] as $row) {
+                $document = $row['document'] ?? null;
+                if (!$document) {
+                    continue; // heartbeat row, no document
+                }
+
+                $fields = $document['fields'] ?? [];
+                $currentAvatar = $fields['actorAvatar']['stringValue'] ?? '';
+                $currentName = $fields['actorName']['stringValue'] ?? '';
+                if ($currentAvatar === $avatarUrl && $currentName === $actorName) {
+                    continue; // already in sync — no write needed
+                }
+
+                // $document['name'] is the bare resource path (projects/.../
+                // documents/notifications/{uid}/items/{id}) — runQuery
+                // doesn't prefix it with the REST host the way a direct
+                // get/post response does.
+                $patchUrl = "https://firestore.googleapis.com/v1/{$document['name']}";
+                Http::withToken($token)->patch(
+                    "{$patchUrl}?updateMask.fieldPaths=actorAvatar&updateMask.fieldPaths=actorName",
+                    [
+                        'fields' => [
+                            'actorAvatar' => ['stringValue' => $avatarUrl],
+                            'actorName' => ['stringValue' => $actorName],
+                        ],
+                    ],
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning("FirestoreNotificationService::backfillActorAvatar({$actorUid}) threw: {$e->getMessage()}");
+        }
+    }
+
     private function accessToken(): string
     {
         return Cache::remember('firestore_access_token', now()->addMinutes(50), function () {
-            if (!$this->credentialsPath || !file_exists(base_path($this->credentialsPath))) {
+            $path = $this->resolvedCredentialsPath();
+            if (!$path || !file_exists($path)) {
                 throw new RuntimeException(
                     'Firebase credentials not found — see FIREBASE_CREDENTIALS in .env ' .
                     '(same file NotificationController uses for FCM).'
@@ -78,12 +164,30 @@ class FirestoreNotificationService
 
             $credentials = new ServiceAccountCredentials(
                 'https://www.googleapis.com/auth/datastore',
-                base_path($this->credentialsPath),
+                $path,
             );
             $token = $credentials->fetchAuthToken();
 
             return $token['access_token'];
         });
+    }
+
+    /**
+     * FIREBASE_CREDENTIALS is meant to be an absolute path to a file kept
+     * outside the web root (see .env's comment on it) — base_path() doesn't
+     * know that and will happily concatenate the project root onto an
+     * already-absolute path, so only relative paths get it applied.
+     */
+    private function resolvedCredentialsPath(): ?string
+    {
+        if (!$this->credentialsPath) {
+            return null;
+        }
+
+        $isAbsolute = str_starts_with($this->credentialsPath, '/')
+            || preg_match('#^[A-Za-z]:[\\\\/]#', $this->credentialsPath) === 1;
+
+        return $isAbsolute ? $this->credentialsPath : base_path($this->credentialsPath);
     }
 
     private function encodeValue(mixed $value): array
