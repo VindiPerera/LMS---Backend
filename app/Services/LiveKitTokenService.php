@@ -18,8 +18,15 @@ use RuntimeException;
  */
 class LiveKitTokenService
 {
-    /** Short on purpose: the client re-requests a token on every (re)join. */
-    private const TTL_SECONDS = 600;
+    /**
+     * 6 hours — LiveKit's own default. LiveKit's SDK re-presents this same
+     * token when it silently resumes a dropped connection, so a short TTL
+     * (it was 10 minutes) made any network blip after that point fail to
+     * reconnect and left the room silent. Access is still enforced per
+     * request: the endpoint only mints for current, non-removed
+     * participants, and a seat change re-mints with the new publish grant.
+     */
+    private const TTL_SECONDS = 21600;
 
     public function url(): string
     {
