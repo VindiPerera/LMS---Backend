@@ -39,8 +39,14 @@ class WellKnownController extends Controller
                 'target' => [
                     'namespace' => 'android_app',
                     'package_name' => 'com.jaan.FaceTalk_clone',
+                    // One entry per machine whose debug keystore signs the
+                    // test APKs handed out — each PC's ~/.android/debug.keystore
+                    // is different, and an APK whose cert isn't listed here
+                    // never gets its links verified (they open in the browser).
+                    // Get a machine's value with `gradlew signingReport`.
                     'sha256_cert_fingerprints' => [
                         '6C:46:5B:77:83:15:6E:BC:37:99:6D:21:1B:CA:E1:2A:E1:96:B3:3F:23:CE:1C:50:E3:2B:9A:88:0D:E9:CC:28',
+                        '2C:1D:1F:A3:2D:C3:80:87:99:D5:8A:F8:58:51:A4:94:D3:F4:34:B4:32:53:8A:C9:F8:E6:70:76:94:0E:28:50',
                     ],
                 ],
             ],

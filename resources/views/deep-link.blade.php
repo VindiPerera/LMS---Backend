@@ -17,6 +17,21 @@ $playStoreUrl = "https://play.google.com/store/apps/details?id={$androidPackage}
 $appStoreUrl = '#'; // TODO: https://apps.apple.com/app/idXXXXXXXXXX once submitted
 
 $openUrl = url()->current(); // re-tapping this same URL is what lets a verified App/Universal Link hand off to the app post-install
+
+// Android: "Open in FaceTalk" must not just re-open this https URL — Chrome
+// treats a same-site tap as a normal page load and never offers the app
+// (and it can't, at all, for a sideloaded test APK whose App Links aren't
+// verified). An intent:// URL makes Chrome launch the installed app
+// directly via the facetalk://u/{code} scheme the app registers; with no
+// app installed Chrome follows browser_fallback_url back here with
+// ?app=missing instead of erroring.
+$isAndroid = stripos((string) request()->userAgent(), 'Android') !== false;
+$appMissing = request()->query('app') === 'missing';
+$fallbackUrl = $openUrl . '?app=missing';
+$intentUrl = 'intent://u/' . rawurlencode($code)
+    . '#Intent;scheme=facetalk;package=' . $androidPackage
+    . ';S.browser_fallback_url=' . rawurlencode($fallbackUrl) . ';end';
+$appOpenUrl = $isAndroid ? $intentUrl : $openUrl;
 $title = $isValid && $name ? "{$name} invited you to FaceTalk" : 'You were invited to FaceTalk';
 $description = $isValid && $handle
     ? "Scan or tap to connect with @{$handle} and start practicing languages together."
@@ -102,6 +117,7 @@ $description = $isValid && $handle
   .btn-primary { background: #7B68F4; color: #fff; }
   .btn-secondary { background: #ECECEF; color: #17171C; }
   .hint { font-size: 12.5px; color: #A3A3AD; margin-top: 18px; line-height: 1.5; }
+  .notice { font-size: 13.5px; color: #8A4B00; background: #FFF4E0; border-radius: 14px; padding: 12px 14px; margin: -12px 0 16px; line-height: 1.45; }
 </style>
 </head>
 <body>
@@ -120,7 +136,10 @@ $description = $isValid && $handle
     <!-- Already installed: this is the exact link that was tapped/scanned.
          Once the app is verified for App/Universal Links, tapping it again
          hands off to the app directly instead of reopening this page. -->
-    <a class="btn btn-primary" href="<?= e($openUrl) ?>">Open in FaceTalk</a>
+    <?php if ($appMissing): ?>
+      <p class="notice">FaceTalk isn't installed on this phone yet. Install the app, then open this link again.</p>
+    <?php endif; ?>
+    <a class="btn btn-primary" href="<?= e($appOpenUrl) ?>">Open in FaceTalk</a>
     <a class="btn btn-secondary" href="<?= e($playStoreUrl) ?>">Get it on Google Play</a>
     <a class="btn btn-secondary" id="app-store-btn" href="<?= e($appStoreUrl) ?>">Download on the App Store</a>
 
@@ -130,6 +149,13 @@ $description = $isValid && $handle
     </p>
   </div>
   <script>
+    <?php if ($isAndroid && $isValid && !$appMissing): ?>
+    // Opened from WhatsApp/Messenger/etc. on Android: hand straight to the
+    // app without waiting for a tap. Not installed -> Chrome follows the
+    // intent's fallback to ?app=missing, which skips this (no loop).
+    window.location.replace(<?= json_encode($intentUrl) ?>);
+    <?php endif; ?>
+
     // Android recovers this invite automatically after install via the
     // Play Store URL's referrer param (see the href above). iOS has no
     // equivalent, so this is what deep_link_service.dart's
